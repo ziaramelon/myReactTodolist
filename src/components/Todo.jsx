@@ -82,7 +82,7 @@ export const Todo = () => {
 
   return (
     <div className="container mx-auto h-screen flex items-center justify-center px-2 sm:px-10">
-      <div className="p-4 h-[90%] border-2 border-secondary w-full space-y-4 px-4 rounded-lg">
+      <div className="p-4 h-[90%] border-2 border-secondary w-full space-y-4 px-4 rounded-lg overflow-y-auto">
         <h1 className="text-center text-3xl font-bold">To-do List</h1>
         <div>
           {/* input field and add button */}
@@ -99,7 +99,7 @@ export const Todo = () => {
           </div>
 
           {/* task list */}
-          <ul className="list mt-6 max-h-80 overflow-y-auto">
+          <ul className="list mt-6">
             {todo.map((t) => (
               <div key={t.id} className="flex items-center gap-2">
                 {editIndex === t.id ? (
