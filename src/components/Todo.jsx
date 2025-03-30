@@ -39,7 +39,13 @@ export const Todo = () => {
   const addTask = () => {
     if (task.trim() === "") return; // gina prevent maka add og empty task
     const { date, time } = getCurrentDateTime();
-    const newTask = { id: generateId(), text: task, completed: false, date, time };
+    const newTask = {
+      id: generateId(),
+      text: task,
+      completed: false,
+      date,
+      time,
+    };
     setTodo([newTask, ...todo]); //gina make sure na ang giadd na task sa beginning sa list mu add
     setTask(""); // clear input field
   };
@@ -49,7 +55,7 @@ export const Todo = () => {
     setTodo(todo.filter((task) => task.id !== id));
   };
 
-  // start edit 
+  // start edit
   const startEdit = (id, text) => {
     setEditIndex(id);
     setEditTask(text);
@@ -65,7 +71,7 @@ export const Todo = () => {
     setEditTask("");
   };
 
-  // cancel edit 
+  // cancel edit
   const cancelEdit = () => {
     setEditIndex(null);
     setEditTask("");
@@ -89,7 +95,7 @@ export const Todo = () => {
           <div className="flex items-center justify-center gap-1">
             <input
               type="text"
-              className="input"
+              className="input focus:outline-none focus:scale-100"
               value={task}
               onChange={handleTask}
             />
@@ -107,14 +113,20 @@ export const Todo = () => {
                     {/* edit task */}
                     <input
                       type="text"
-                      className="input"
+                      className="input focus:outline-none focus:scale-100"
                       value={editTask}
                       onChange={(e) => setEditTask(e.target.value)}
                     />
-                    <button className="btn rounded-lg btn-success btn-xs sm:btn-sm" onClick={saveEdit}>
+                    <button
+                      className="btn rounded-lg btn-success btn-xs sm:btn-sm"
+                      onClick={saveEdit}
+                    >
                       Save
                     </button>
-                    <button className="btn rounded-lg btn-secondary btn-xs sm:btn-sm" onClick={cancelEdit}>
+                    <button
+                      className="btn rounded-lg btn-secondary btn-xs sm:btn-sm"
+                      onClick={cancelEdit}
+                    >
                       Cancel
                     </button>
                   </>
@@ -128,14 +140,17 @@ export const Todo = () => {
                         onChange={() => toggleTaskComplete(t.id)}
                         checked={t.completed}
                       />
-                      <li className={`list-row w-full flex flex-col text-xs sm:text-sm md:text-base md:flex-row justify-between ${t.completed ? "line-through text-gray-500" : ""}`}>
+                      <li
+                        className={`list-row w-full flex flex-col text-xs sm:text-sm md:text-base md:flex-row justify-between ${
+                          t.completed ? "line-through text-gray-500" : ""
+                        }`}
+                      >
                         {t.text}
                         <div className="flex gap-2 items-center text-gray-500 text-sm">
                           <span>{t.date}</span>
                           <span>{t.time}</span>
                         </div>
                       </li>
-
                     </div>
                     <button
                       className="btn btn-xs sm:btn-sm btn-warning"
