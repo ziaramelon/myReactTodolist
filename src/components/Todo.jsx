@@ -95,6 +95,7 @@ export const Todo = () => {
           <div className="flex items-center justify-center gap-1">
             <input
               type="text"
+              placeholder="Enter task"
               className="input focus:outline-none focus:scale-100"
               value={task}
               onChange={handleTask}
@@ -124,7 +125,7 @@ export const Todo = () => {
                       Save
                     </button>
                     <button
-                      className="btn rounded-lg btn-secondary btn-xs sm:btn-sm"
+                      className="btn rounded-lg btn-error btn-xs sm:btn-sm"
                       onClick={cancelEdit}
                     >
                       Cancel
@@ -153,7 +154,7 @@ export const Todo = () => {
                       </li>
                     </div>
                     <button
-                      className="btn btn-xs sm:btn-sm btn-warning"
+                      className="btn btn-xs sm:btn-sm btn-primary"
                       onClick={() => startEdit(t.id, t.text)}
                     >
                       <SquarePen color="white" className="w-4 sm:w-6" />
