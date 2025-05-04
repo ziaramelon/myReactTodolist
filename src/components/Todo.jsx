@@ -1,43 +1,56 @@
 import { useState, useEffect } from "react";
-import { SquarePen, Trash2 } from "lucide-react";
+import {
+  CheckCircle,
+  X,
+  Edit,
+  Trash2,
+  Plus,
+  Calendar,
+  Clock,
+  Search,
+} from "lucide-react";
 
-export const Todo = () => {
+export default function Todo() {
   const getSavedTodos = () => {
-    const savedTodos = localStorage.getItem("todoList"); // pang get ni if naay existing todo
-    return savedTodos ? JSON.parse(savedTodos) : []; // pra pang save ni sa mga todo maskin mag reload. pag la laman mag return ra og empty array
+    const savedTodos = localStorage.getItem("todoList");
+    return savedTodos ? JSON.parse(savedTodos) : [];
   };
 
-  // useStates pra store og tasks, edit, delete
-  const [todo, setTodo] = useState(getSavedTodos);
-  const [task, setTask] = useState(""); // State pra sa new task input
-  const [editIndex, setEditIndex] = useState(null); // itrack unsa task ang gina edit
-  const [editTask, setEditTask] = useState(""); // istore ang edited task text
+  // States
+  const [todos, setTodos] = useState(getSavedTodos);
+  const [task, setTask] = useState("");
+  const [editIndex, setEditIndex] = useState(null);
+  const [editTask, setEditTask] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priority, setPriority] = useState("medium");
 
-  // isave ang tasks sa localStorage pag naay changes sa imong todolist
+  // Save todos to localStorage
   useEffect(() => {
-    localStorage.setItem("todoList", JSON.stringify(todo));
-  }, [todo]);
+    localStorage.setItem("todoList", JSON.stringify(todos));
+  }, [todos]);
 
-  // function pra mag generate unique id sa kada task na icreate
+  // Generate unique ID
   const generateId = () => Date.now() + Math.random();
 
-  // function pra ma get ang time and date
+  // Get current date and time
   const getCurrentDateTime = () => {
     const now = new Date();
     return {
       date: now.toLocaleDateString(),
-      time: now.toLocaleTimeString(),
+      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
   };
 
-  // ga handle sa mga gina input nimo pra mag add ka og task
+  // Handle input change
   const handleTask = (e) => {
     setTask(e.target.value);
   };
 
-  // function pra maka add new task
+  // Add new task
   const addTask = () => {
-    if (task.trim() === "") return; // gina prevent maka add og empty task
+    if (task.trim() === "") return;
+
     const { date, time } = getCurrentDateTime();
     const newTask = {
       id: generateId(),
@@ -45,133 +58,331 @@ export const Todo = () => {
       completed: false,
       date,
       time,
+      priority,
     };
-    setTodo([newTask, ...todo]); //gina make sure na ang giadd na task sa beginning sa list mu add
-    setTask(""); // clear input field
+
+    setTodos([newTask, ...todos]);
+    setTask("");
+    setPriority("medium");
   };
 
-  // delete task
+  // Ensure all todos have the required properties
+  useEffect(() => {
+    const updatedTodos = todos.map((todo) => ({
+      ...todo,
+      priority: todo.priority || "medium",
+      completed: typeof todo.completed === "boolean" ? todo.completed : false,
+      date: todo.date || getCurrentDateTime().date,
+      time: todo.time || getCurrentDateTime().time,
+    }));
+
+    if (JSON.stringify(updatedTodos) !== JSON.stringify(todos)) {
+      setTodos(updatedTodos);
+    }
+  }, []);
+
+  // Handle key press for adding task
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      addTask();
+    }
+  };
+
+  // Delete task
   const deleteTask = (id) => {
-    setTodo(todo.filter((task) => task.id !== id));
+    setTodos(todos.filter((task) => task.id !== id));
   };
 
-  // start edit
+  // Start edit
   const startEdit = (id, text) => {
     setEditIndex(id);
     setEditTask(text);
   };
 
-  // save edit task
+  // Save edit
   const saveEdit = () => {
     if (editTask.trim() === "") return;
-    setTodo(
-      todo.map((t) => (t.id === editIndex ? { ...t, text: editTask } : t))
+    setTodos(
+      todos.map((t) => (t.id === editIndex ? { ...t, text: editTask } : t))
     );
     setEditIndex(null);
     setEditTask("");
   };
 
-  // cancel edit
+  // Cancel edit
   const cancelEdit = () => {
     setEditIndex(null);
     setEditTask("");
   };
 
-  // toggle task pag done na
+  // Toggle task completion
   const toggleTaskComplete = (id) => {
-    setTodo(
-      todo.map((task) =>
+    setTodos(
+      todos.map((task) =>
         task.id === id ? { ...task, completed: !task.completed } : task
       )
     );
   };
 
+  // Filter tasks
+  const filteredTodos = todos.filter((todo) => {
+    // Search filter
+    const matchesSearch = todo.text
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    // Status filter
+    if (filter === "completed") {
+      return todo.completed && matchesSearch;
+    } else if (filter === "active") {
+      return !todo.completed && matchesSearch;
+    }
+    return matchesSearch;
+  });
+
+  // Clear completed tasks
+  const clearCompleted = () => {
+    setTodos(todos.filter((todo) => !todo.completed));
+  };
+
+  // Get priority color
+  const getPriorityColor = (priority = "medium") => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-700 border-red-300";
+      case "medium":
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
+      case "low":
+        return "bg-green-100 text-green-700 border-green-300";
+      default:
+        return "bg-blue-100 text-blue-700 border-blue-300";
+    }
+  };
+
   return (
-    <div className="container mx-auto h-screen flex items-center justify-center px-2 sm:px-10">
-      <div className="p-4 h-[90%] border-2 border-secondary w-full space-y-4 px-4 rounded-lg overflow-y-auto">
-        <h1 className="text-center text-3xl font-bold">To-do List</h1>
-        <div>
-          {/* input field and add button */}
-          <div className="flex items-center justify-center gap-1">
+    <div className="min-h-screen bg-gradient-to-br from-green-300 to-green-800 py-8 px-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-green-600 text-white p-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-center">
+            Task Manager
+          </h1>
+        </div>
+
+        {/* Add task section */}
+        <div className="p-4 md:p-6 border-b">
+          <div className="flex flex-col md:flex-row gap-3">
             <input
               type="text"
-              placeholder="Enter task"
-              className="input focus:outline-none focus:scale-100"
+              placeholder="Add a new task..."
+              className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-black"
               value={task}
               onChange={handleTask}
+              onKeyPress={handleKeyPress}
             />
-            <button className="btn rounded-lg" onClick={addTask}>
-              Add
+
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-black"
+            >
+              <option value="low">Low Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+            </select>
+
+            <button
+              onClick={addTask}
+              className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 transition-colors"
+            >
+              <Plus size={20} />
+              <span className="hidden md:inline">Add Task</span>
             </button>
           </div>
+        </div>
 
-          {/* task list */}
-          <ul className="list mt-6">
-            {todo.map((t) => (
-              <div key={t.id} className="flex items-center gap-2">
-                {editIndex === t.id ? (
-                  <>
-                    {/* edit task */}
-                    <input
-                      type="text"
-                      className="input focus:outline-none focus:scale-100"
-                      value={editTask}
-                      onChange={(e) => setEditTask(e.target.value)}
-                    />
-                    <button
-                      className="btn rounded-lg btn-success btn-xs sm:btn-sm"
-                      onClick={saveEdit}
-                    >
-                      Save
-                    </button>
-                    <button
-                      className="btn rounded-lg btn-error btn-xs sm:btn-sm"
-                      onClick={cancelEdit}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {/* display task */}
-                    <div className="flex items-center w-full">
+        {/* Search and filter */}
+        <div className="p-4 md:p-6 bg-gray-50 border-b flex flex-col md:flex-row gap-3 md:gap-4 md:items-center justify-between">
+          <div className="relative flex-1">
+            <Search
+              size={20}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+            />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              className="w-full text-black pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-2 justify-between md:justify-end">
+            <div className="flex rounded-lg overflow-hidden border border-gray-300">
+              <button
+                className={`px-3 py-2 ${
+                  filter === "all"
+                    ? "bg-green-600 text-white"
+                    : "bg-white text-gray-700"
+                }`}
+                onClick={() => setFilter("all")}
+              >
+                All
+              </button>
+              <button
+                className={`px-3 py-2 ${
+                  filter === "active"
+                    ? "bg-green-600 text-white"
+                    : "bg-white text-gray-700"
+                }`}
+                onClick={() => setFilter("active")}
+              >
+                Active
+              </button>
+              <button
+                className={`px-3 py-2 ${
+                  filter === "completed"
+                    ? "bg-green-600 text-white"
+                    : "bg-white text-gray-700"
+                }`}
+                onClick={() => setFilter("completed")}
+              >
+                Completed
+              </button>
+            </div>
+
+            <button
+              onClick={clearCompleted}
+              className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              Clear Done
+            </button>
+          </div>
+        </div>
+
+        {/* Task list */}
+        <div className="overflow-y-auto max-h-96">
+          {filteredTodos.length > 0 ? (
+            <ul className="divide-y divide-gray-200">
+              {filteredTodos.map((todo) => (
+                <li
+                  key={todo.id}
+                  className="p-4 hover:bg-gray-50 transition-colors"
+                >
+                  {editIndex === todo.id ? (
+                    <div className="flex gap-2">
                       <input
-                        type="checkbox"
-                        className="checkbox checkbox-secondary checkbox-sm md:checkbox"
-                        onChange={() => toggleTaskComplete(t.id)}
-                        checked={t.completed}
+                        type="text"
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={editTask}
+                        onChange={(e) => setEditTask(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && saveEdit()}
                       />
-                      <li
-                        className={`list-row w-full flex flex-col text-xs sm:text-sm md:text-base md:flex-row justify-between ${
-                          t.completed ? "line-through text-gray-500" : ""
-                        }`}
+                      <button
+                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        onClick={saveEdit}
                       >
-                        {t.text}
-                        <div className="flex gap-2 items-center text-gray-500 text-sm">
-                          <span>{t.date}</span>
-                          <span>{t.time}</span>
-                        </div>
-                      </li>
+                        Save
+                      </button>
+                      <button
+                        className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                        onClick={cancelEdit}
+                      >
+                        Cancel
+                      </button>
                     </div>
-                    <button
-                      className="btn btn-xs sm:btn-sm btn-primary"
-                      onClick={() => startEdit(t.id, t.text)}
-                    >
-                      <SquarePen color="white" className="w-4 sm:w-6" />
-                    </button>
-                    <button
-                      className="btn btn-xs sm:btn-sm btn-error"
-                      onClick={() => deleteTask(t.id)}
-                    >
-                      <Trash2 color="white" className="w-4 sm:w-6" />
-                    </button>
-                  </>
-                )}
-              </div>
-            ))}
-          </ul>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleTaskComplete(todo.id)}
+                        className="flex-shrink-0"
+                      >
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            todo.completed
+                              ? "bg-green-500 text-white"
+                              : "border-2 border-gray-300"
+                          }`}
+                        >
+                          {todo.completed && <CheckCircle size={20} />}
+                        </div>
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className={`text-sm md:text-base ${
+                            todo.completed
+                              ? "line-through text-gray-500"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {todo.text}
+                        </div>
+                        <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Calendar size={14} />
+                            {todo.date}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock size={14} />
+                            {todo.time}
+                          </span>
+                          {todo.priority && (
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(
+                                todo.priority
+                              )} border`}
+                            >
+                              {todo.priority.charAt(0).toUpperCase() +
+                                todo.priority.slice(1)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(todo.id, todo.text)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => deleteTask(todo.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              <p className="text-lg">No tasks found</p>
+              <p className="text-sm mt-2">
+                {searchQuery
+                  ? "Try a different search query"
+                  : filter !== "all"
+                  ? `No ${filter} tasks`
+                  : "Add a task to get started"}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-gray-50 border-t text-center text-sm text-gray-500">
+          {todos.length > 0 ? (
+            <p>{`${
+              todos.filter((t) => !t.completed).length
+            } task(s) left to complete`}</p>
+          ) : (
+            <p>Your task list is empty</p>
+          )}
         </div>
       </div>
     </div>
   );
-};
+}
